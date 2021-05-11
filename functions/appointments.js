@@ -18,7 +18,7 @@ exports.appointment = functions.database.ref('/appointments/{doctorId}/{date}/{t
   const doctorId = ctx.params.doctorId;
   
   const dataSnapshot = change.after.val();
-  const { patientId, patientName, profileName, age, gender, height, weight, ailment, apptTime, keys, notes} = dataSnapshot;
+  const { patientId, patientName, profileName, dateOfBirth, gender, height, weight, ailment, apptTime, keys, notes} = dataSnapshot;
 
 
   var newApptRef = admin.database().ref('appts').push();
@@ -28,7 +28,7 @@ exports.appointment = functions.database.ref('/appointments/{doctorId}/{date}/{t
   updateUserData[`${patientId}/${profileName}/appts/${newApptRefKey}`] = { "apptTime": apptTime ,'ailment': ailment, 'keys': keys, "notes": notes || null };
   updateUserData[`${patientId}/${profileName}/profile`] = {
     'patientName': patientName,
-    'age': age,
+    'dateOfBirth': dateOfBirth,
     'gender': gender,
     'height': height,
     'weight': weight,
@@ -46,7 +46,7 @@ exports.appointment = functions.database.ref('/appointments/{doctorId}/{date}/{t
       
       // // add patient data under its profile name
       let profileExists = false;
-      await admin.database().ref(location).child(`${patientId}/profileName`).once('value', (snapshot) => {
+      await admin.database().ref(location).child(`${patientId}/${profileName}`).once('value', (snapshot) => {
         if (snapshot.exists()) {
           profileExists = true;
         }
