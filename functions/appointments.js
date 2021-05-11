@@ -1,4 +1,5 @@
 'use strict';
+const dayjs = require('dayjs');
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
@@ -54,7 +55,8 @@ exports.appointment = functions.database.ref('/appointments/{doctorId}/{date}/{t
 
       // new profile - set creation date on the profile
       if (!profileExists) {
-        updateUserData[`${patientId}/${profileName}/created`] = apptTime;
+        // set join date as today.
+        updateUserData[`${patientId}/${profileName}/created`] = dayjs().unix();
       }
       await updateAppts(location, profileName, updateUserData);
 
