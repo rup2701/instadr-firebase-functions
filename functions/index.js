@@ -1,9 +1,16 @@
+require('dotenv').config();
+const branch = require('branchio-sdk');
+
 const functions = require('firebase-functions');
 let admin = require('firebase-admin');
 var apn = require('apn');
 admin.initializeApp();
 
 const db = admin.firestore();
+const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
+
+const twilio_client = require('twilio')(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
 // Export functions from the appointments froup
 // - newAppointment
@@ -181,4 +188,47 @@ async function send_push_notif(user_type, receiver_id, sender_id) {
     }
   });
   return Promise.all(tokensToRemove);
+}
+
+
+// send patient invites (branch link) via twilio SMMS
+exports.sendProviderInvites = functions.database.ref('/doctors/{doctorId}/my_patients/invites/{invitee}').onCreate(async (message, context) => {
+  console.log('Doctor Id', context.params.doctorId);
+
+  // const branch_link = 'https://instadr.app.link/iRzpe1dDukb';
+
+  const branch_link = await branch_url(context.params.doctorId);
+  console.log('branch_link', branch_link);
+
+  const response = await twilio_client.messages.create({
+      body: `Dr. Jonathan Lieberman requests your permission to add to his patients list. ${branch_link}`,
+      from: '+14154495255',
+      to: '+14152604693'
+    });
+  console.log('Message', response.sid);
+  return message.val();
+});
+
+async function branch_url(doctorId) {
+
+  const client = branch({
+    appId: process.env.BRANCH_APP_ID,
+    key: process.env.BRANCH_KEY,
+    secret: process.env.BRANCH_SECRET
+  });
+
+  // (async () => {
+  const { url } = await client.link({
+    alias: '',
+    stage: 'new patient invite',
+    channel: 'mobile',
+    feature: 'patients',
+    data: {
+      'doctorId': `${doctorId}`,
+    }
+  });
+  console.log('url', url);
+  return url;
+  
+  // })();
 }

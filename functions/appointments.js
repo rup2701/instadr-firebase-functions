@@ -5,7 +5,7 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 // const request = require('request-promise');
 
-exports.appointment = functions.database.ref('/appointments/{doctorId}/{appt_date}/{appt_time}').onWrite(async (change, ctx) => {
+exports.new_appointment = functions.database.ref('/appointments/{doctorId}/{appt_date}/{appt_time}').onWrite(async (change, ctx) => {
   console.log('New appt added for doctor with ID', ctx.params.doctorId);
   
   // if before value does not exist - the appt is still on hold and 
@@ -20,13 +20,14 @@ exports.appointment = functions.database.ref('/appointments/{doctorId}/{appt_dat
   const appt_date = ctx.params.appt_date;
   
   const dataSnapshot = change.after.val();
-  const { patientId, patientName, profileName, dateOfBirth, gender, height, weight, ailment, apptTime, keys, notes} = dataSnapshot;
+  const { patientId, lastName, firstName, profileName, dateOfBirth, gender, height, weight, ailment, apptTime, keys, notes} = dataSnapshot;
 
   // prepare update for which a new appt was added or modified (notes/rx/labs data added)
   var updateUserData = {};
   updateUserData[`${patientId}/${profileName}/appts/${appt_date}`] = { "apptTime": apptTime ,'ailment': ailment, 'keys': keys, "notes": notes || null };
   updateUserData[`${patientId}/${profileName}/profile`] = {
-    'patientName': patientName,
+    'lastName': lastName,
+    'firstName': firstName,
     'dateOfBirth': dateOfBirth,
     'gender': gender,
     'height': height,
